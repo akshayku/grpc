@@ -36,6 +36,9 @@
 #include "test/core/util/test_config.h"
 
 #include <gtest/gtest.h>
+#include <string>
+using namespace std;
+static string test_server1_key_id;
 
 namespace grpc {
 namespace testing {
@@ -118,8 +121,15 @@ static int fail_server_auth_check(grpc_channel_args* server_args) {
 #define SERVER_INIT(REQUEST_TYPE)                                           \
   static void SERVER_INIT_NAME(REQUEST_TYPE)(                               \
       grpc_end2end_test_fixture * f, grpc_channel_args * server_args) {     \
-    grpc_ssl_pem_key_cert_pair pem_cert_key_pair = {test_server1_key,       \
-                                                    test_server1_cert};     \
+    grpc_ssl_pem_key_cert_pair pem_cert_key_pair;                           \
+    if (!test_server1_key_id.empty()) {                           \
+      pem_cert_key_pair.private_key = test_server1_key_id.c_str();          \
+      pem_cert_key_pair.cert_chain = test_server1_cert;                     \
+    }                                                                       \
+    else {                                                                  \
+      pem_cert_key_pair.private_key = test_server1_key;                     \
+      pem_cert_key_pair.cert_chain = test_server1_cert;                     \
+    }                                                                       \
     grpc_server_credentials* ssl_creds =                                    \
         grpc_ssl_server_credentials_create_ex(                              \
             test_root_cert, &pem_cert_key_pair, 1, REQUEST_TYPE, NULL);     \
@@ -370,11 +380,17 @@ int main(int argc, char** argv) {
   grpc_init();
   ::testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();
+#ifndef OPENSSL_IS_BORINGSSL
+  // Run all tests again with engine
+  string key(test_server1_key);
+  test_server1_key_id.append("engine:e_passthrough:");
+  test_server1_key_id.append(key);
+  ret += RUN_ALL_TESTS();
+#endif
   grpc_shutdown();
 
   /* Cleanup. */
   remove(roots_filename);
   gpr_free(roots_filename);
-
   return ret;
 }

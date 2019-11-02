@@ -978,6 +978,45 @@ target_link_libraries(alts_test_util
 
 
 endif()
+if(gRPC_BUILD_TESTS)
+
+add_library(e_passthrough SHARED
+  test/core/end2end/engine_passthrough.c
+)
+
+set_target_properties(e_passthrough PROPERTIES
+  VERSION ${gRPC_CORE_VERSION}
+  SOVERSION ${gRPC_CORE_SOVERSION}
+)
+
+if(WIN32 AND MSVC)
+  set_target_properties(e_passthrough PROPERTIES COMPILE_PDB_NAME "e_passthrough"
+    COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+  )
+  if(gRPC_INSTALL)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/e_passthrough.pdb
+      DESTINATION ${gRPC_INSTALL_LIBDIR} OPTIONAL
+    )
+  endif()
+endif()
+
+target_include_directories(e_passthrough
+  PUBLIC $<INSTALL_INTERFACE:${gRPC_INSTALL_INCLUDEDIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${_gRPC_ADDRESS_SORTING_INCLUDE_DIR}
+    ${_gRPC_SSL_INCLUDE_DIR}
+    ${_gRPC_UPB_GENERATED_DIR}
+    ${_gRPC_UPB_GRPC_GENERATED_DIR}
+    ${_gRPC_UPB_INCLUDE_DIR}
+    ${_gRPC_ZLIB_INCLUDE_DIR}
+)
+target_link_libraries(e_passthrough
+  ${_gRPC_ALLTARGETS_LIBRARIES}
+)
+
+
+endif()
 
 add_library(gpr
   src/core/lib/gpr/alloc.cc

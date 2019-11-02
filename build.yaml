@@ -1682,6 +1682,14 @@ libs:
   deps:
   - grpc
   secure: true
+- name: e_passthrough
+  build: test
+  language: c
+  src:
+  - test/core/end2end/engine_passthrough.c
+  dll: only
+  platforms:
+  - linux
 - name: gpr
   build: all
   language: c
