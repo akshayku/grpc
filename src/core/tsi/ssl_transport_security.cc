@@ -48,6 +48,7 @@ extern "C" {
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/engine.h>
 }
 
 #include "src/core/lib/gpr/useful.h"
@@ -135,6 +136,7 @@ typedef struct {
 static gpr_once g_init_openssl_once = GPR_ONCE_INIT;
 static int g_ssl_ctx_ex_factory_index = -1;
 static const unsigned char kSslSessionIdContext[] = {'g', 'r', 'p', 'c'};
+static const char kSslEnginePrefix[] = "engine:";
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000
 static gpr_mu* g_openssl_mutexes = nullptr;
@@ -568,21 +570,75 @@ static tsi_result ssl_ctx_use_private_key(SSL_CTX* context, const char* pem_key,
   EVP_PKEY* private_key = nullptr;
   BIO* pem;
   GPR_ASSERT(pem_key_size <= INT_MAX);
-  pem = BIO_new_mem_buf((void*)pem_key, static_cast<int>(pem_key_size));
-  if (pem == nullptr) return TSI_OUT_OF_RESOURCES;
-  do {
-    private_key = PEM_read_bio_PrivateKey(pem, nullptr, nullptr, (void*)"");
-    if (private_key == nullptr) {
-      result = TSI_INVALID_ARGUMENT;
-      break;
-    }
-    if (!SSL_CTX_use_PrivateKey(context, private_key)) {
-      result = TSI_INVALID_ARGUMENT;
-      break;
-    }
-  } while (0);
-  if (private_key != nullptr) EVP_PKEY_free(private_key);
-  BIO_free(pem);
+
+// BoringSSL does not have ENGINE_load_dynamic, ENGINE_by_id
+// support.
+#ifndef OPENSSL_IS_BORINGSSL
+  if (strncmp(pem_key, kSslEnginePrefix,
+              GPR_ARRAY_SIZE(kSslEnginePrefix) - 1) == 0)
+  {
+    do {
+      char *p, *last;
+      ENGINE* engine;
+      gpr_log(GPR_INFO, "ENGINE key specified");
+      p = (char*)pem_key + sizeof("engine:") - 1;
+      last = (char*)strchr(p, ':');
+      if (last == nullptr) {
+        gpr_log(GPR_ERROR, "No engine defined %s", p);
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+      ENGINE_load_dynamic();
+      *last = '\0';
+      engine = ENGINE_by_id(p);
+      if (engine == nullptr) {
+        gpr_log(GPR_ERROR, "Cannot load engine %s", p);
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+      *last++ = ':';
+      if (!ENGINE_set_default(engine, ENGINE_METHOD_ALL)) {
+        gpr_log(GPR_ERROR, "Cannot set default methods for engine");
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+      if (!ENGINE_init(engine)) {
+        gpr_log(GPR_ERROR, "ENGINE Initialization failed");
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+      private_key = ENGINE_load_private_key(engine, last, 0, 0);
+      if (private_key == nullptr) {
+        gpr_log(GPR_ERROR, "ENGINE load private key() failed");
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+      if (!SSL_CTX_use_PrivateKey(context, private_key)) {
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+    } while (0);
+    if (private_key != nullptr) EVP_PKEY_free(private_key);
+  }
+  else
+#endif /* OPENSSL_IS_BORINGSSL */
+  {
+    pem = BIO_new_mem_buf((void*)pem_key, static_cast<int>(pem_key_size));
+    if (pem == nullptr) return TSI_OUT_OF_RESOURCES;
+    do {
+      private_key = PEM_read_bio_PrivateKey(pem, nullptr, nullptr, (void*)"");
+      if (private_key == nullptr) {
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+      if (!SSL_CTX_use_PrivateKey(context, private_key)) {
+        result = TSI_INVALID_ARGUMENT;
+        break;
+      }
+    } while (0);
+    if (private_key != nullptr) EVP_PKEY_free(private_key);
+    BIO_free(pem);
+  }
   return result;
 }
 
