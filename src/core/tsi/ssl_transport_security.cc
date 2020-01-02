@@ -1070,6 +1070,9 @@ static tsi_result ssl_handshaker_result_extract_peer(
     SSL_get0_next_proto_negotiated(impl->ssl, &alpn_selected,
                                    &alpn_selected_len);
   }
+  // When called on the client side, the stack also contains the
+  // peer's certificate; When called on the server side,
+  // the peer's certificate is not present in the stack
   STACK_OF(X509) *peer_chain = SSL_get_peer_cert_chain(impl->ssl);
   // 1 is for session reused property.
   size_t new_property_count = peer->property_count + 1;
