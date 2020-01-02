@@ -20,7 +20,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <string>
 
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
@@ -39,7 +38,7 @@
 
 #include <gtest/gtest.h>
 
-static std::string test_server1_key_id;
+static grpc::string test_server1_key_id;
 
 namespace grpc {
 namespace testing {
