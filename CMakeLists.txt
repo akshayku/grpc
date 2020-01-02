@@ -981,7 +981,7 @@ endif()
 if(gRPC_BUILD_TESTS)
 
 add_library(e_passthrough SHARED
-  test/core/end2end/engine_passthrough.c
+  test/core/end2end/engine_passthrough.cc
 )
 
 set_target_properties(e_passthrough PROPERTIES
@@ -13531,6 +13531,7 @@ target_link_libraries(h2_ssl_cert_test
   grpc++
   grpc
   gpr
+  e_passthrough
   ${_gRPC_GFLAGS_LIBRARIES}
 )
 

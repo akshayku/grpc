@@ -3475,7 +3475,7 @@ endif
 
 
 LIBE_PASSTHROUGH_SRC = \
-    test/core/end2end/engine_passthrough.c \
+    test/core/end2end/engine_passthrough.cc \
 
 PUBLIC_HEADERS_C += \
 
@@ -17781,16 +17781,16 @@ $(BINDIR)/$(CONFIG)/h2_ssl_cert_test: protobuf_dep_error
 
 else
 
-$(BINDIR)/$(CONFIG)/h2_ssl_cert_test: $(PROTOBUF_DEP) $(H2_SSL_CERT_TEST_OBJS) $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr.a
+$(BINDIR)/$(CONFIG)/h2_ssl_cert_test: $(PROTOBUF_DEP) $(H2_SSL_CERT_TEST_OBJS) $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libe_passthrough.a
 	$(E) "[LD]      Linking $@"
 	$(Q) mkdir -p `dirname $@`
-	$(Q) $(LDXX) $(LDFLAGS) $(H2_SSL_CERT_TEST_OBJS) $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LDLIBSXX) $(LDLIBS_PROTOBUF) $(LDLIBS) $(LDLIBS_SECURE) $(GTEST_LIB) -o $(BINDIR)/$(CONFIG)/h2_ssl_cert_test
+	$(Q) $(LDXX) $(LDFLAGS) $(H2_SSL_CERT_TEST_OBJS) $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libe_passthrough.a $(LDLIBSXX) $(LDLIBS_PROTOBUF) $(LDLIBS) $(LDLIBS_SECURE) $(GTEST_LIB) -o $(BINDIR)/$(CONFIG)/h2_ssl_cert_test
 
 endif
 
 endif
 
-$(OBJDIR)/$(CONFIG)/test/core/end2end/h2_ssl_cert_test.o:  $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr.a
+$(OBJDIR)/$(CONFIG)/test/core/end2end/h2_ssl_cert_test.o:  $(LIBDIR)/$(CONFIG)/libgrpc_test_util.a $(LIBDIR)/$(CONFIG)/libgrpc++.a $(LIBDIR)/$(CONFIG)/libgrpc.a $(LIBDIR)/$(CONFIG)/libgpr.a $(LIBDIR)/$(CONFIG)/libe_passthrough.a
 
 deps_h2_ssl_cert_test: $(H2_SSL_CERT_TEST_OBJS:.o=.dep)
 
@@ -23277,7 +23277,7 @@ test/core/end2end/data/server1_cert.cc: $(OPENSSL_DEP)
 test/core/end2end/data/server1_key.cc: $(OPENSSL_DEP)
 test/core/end2end/data/test_root_cert.cc: $(OPENSSL_DEP)
 test/core/end2end/end2end_tests.cc: $(OPENSSL_DEP)
-test/core/end2end/engine_passthrough.c: $(OPENSSL_DEP)
+test/core/end2end/engine_passthrough.cc: $(OPENSSL_DEP)
 test/core/end2end/tests/call_creds.cc: $(OPENSSL_DEP)
 test/core/security/oauth2_utils.cc: $(OPENSSL_DEP)
 test/core/tsi/alts/crypt/gsec_test_util.cc: $(OPENSSL_DEP)
