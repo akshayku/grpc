@@ -21,13 +21,13 @@
 // This sample engine expects KeyId to be actual PEM encoded
 // key itself and just calls standard openSSL functions.
 
-#ifndef OPENSSL_IS_BORINGSSL
-
 #include <stdio.h>
 #include <string.h>
 #include <openssl/engine.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
+
+#ifndef OPENSSL_IS_BORINGSSL
 
 static const char engine_id[] = "e_passthrough";
 static const char engine_name[] = "A passthrough engine for private keys";
