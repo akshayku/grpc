@@ -1,16 +1,38 @@
+/*
+ *
+ * Copyright 2020 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 // This is a sample openSSL engine which tests the openSSL
 // engine plugability with gRPC.
 // This sample engine expects KeyId to be actual PEM encoded
 // key itself and just calls standard openSSL functions.
+
+#ifndef OPENSSL_IS_BORINGSSL
 
 #include <stdio.h>
 #include <string.h>
 #include <openssl/engine.h>
 #include <openssl/pem.h>
 #include <openssl/bio.h>
+
 static const char engine_id[] = "e_passthrough";
 static const char engine_name[] = "A passthrough engine for private keys";
 static int e_passthrough_idx = -1;
+
 static int e_passthrough_init(ENGINE *e) {
   if (e_passthrough_idx < 0) {
     e_passthrough_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
@@ -19,6 +41,7 @@ static int e_passthrough_init(ENGINE *e) {
   }
   return 1;
 }
+
 EVP_PKEY *e_passthrough_load_privkey(ENGINE *eng, const char *key_id,
                                      UI_METHOD *ui_method, void *callback_data) {
   EVP_PKEY *pkey = NULL;
@@ -28,6 +51,7 @@ EVP_PKEY *e_passthrough_load_privkey(ENGINE *eng, const char *key_id,
   BIO_free(pem);
   return pkey;
 }
+
 int bind_helper(ENGINE *e, const char *id) {
   if (id && strcmp(id, engine_id)) {
     return 0;
@@ -41,5 +65,8 @@ int bind_helper(ENGINE *e, const char *id) {
   }
   return 1;
 }
+
 IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
 IMPLEMENT_DYNAMIC_CHECK_FN()
+
+#endif // OPENSSL_IS_BORINGSSL

@@ -202,14 +202,3 @@ grpc_cc_test(
         "//test/core/util:grpc_test_util",
     ],
 )
-
-
-grpc_cc_library(
-    name = "e_passthrough",
-    srcs = [
-        "engine_passthrough.c",
-    ],
-    language = "c++",
-    deps = [
-    ],
-)

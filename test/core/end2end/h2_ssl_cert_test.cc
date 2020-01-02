@@ -20,9 +20,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
 
 #include <grpc/support/alloc.h>
 #include <grpc/support/log.h>
+#include <grpcpp/support/string_ref.h>
 
 #include "src/core/lib/channel/channel_args.h"
 #include "src/core/lib/gpr/string.h"
@@ -36,9 +38,8 @@
 #include "test/core/util/test_config.h"
 
 #include <gtest/gtest.h>
-#include <string>
-using namespace std;
-static string test_server1_key_id;
+
+static std::string test_server1_key_id;
 
 namespace grpc {
 namespace testing {
@@ -122,7 +123,7 @@ static int fail_server_auth_check(grpc_channel_args* server_args) {
   static void SERVER_INIT_NAME(REQUEST_TYPE)(                               \
       grpc_end2end_test_fixture * f, grpc_channel_args * server_args) {     \
     grpc_ssl_pem_key_cert_pair pem_cert_key_pair;                           \
-    if (!test_server1_key_id.empty()) {                           \
+    if (!test_server1_key_id.empty()) {                                     \
       pem_cert_key_pair.private_key = test_server1_key_id.c_str();          \
       pem_cert_key_pair.cert_chain = test_server1_cert;                     \
     }                                                                       \
@@ -382,9 +383,8 @@ int main(int argc, char** argv) {
   int ret = RUN_ALL_TESTS();
 #ifndef OPENSSL_IS_BORINGSSL
   // Run all tests again with engine
-  string key(test_server1_key);
   test_server1_key_id.append("engine:e_passthrough:");
-  test_server1_key_id.append(key);
+  test_server1_key_id.append(test_server1_key);
   ret += RUN_ALL_TESTS();
 #endif
   grpc_shutdown();
@@ -392,5 +392,6 @@ int main(int argc, char** argv) {
   /* Cleanup. */
   remove(roots_filename);
   gpr_free(roots_filename);
+
   return ret;
 }
