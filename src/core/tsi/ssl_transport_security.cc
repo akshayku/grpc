@@ -1032,6 +1032,7 @@ tsi_result tsi_ssl_get_cert_chain_contents(
   for (int i = 0; i < sk_X509_num(peer_chain); i++) {
     if (!PEM_write_bio_X509(bio, sk_X509_value(peer_chain, i))) {
       BIO_free(bio);
+      gpr_log(GPR_ERROR, "PEM_write_bio_X509 failed");
       return TSI_INTERNAL_ERROR;
     }
   }
@@ -1039,6 +1040,7 @@ tsi_result tsi_ssl_get_cert_chain_contents(
   long len = BIO_get_mem_data(bio, &contents);
   if (len <= 0) {
     BIO_free(bio);
+    gpr_log(GPR_ERROR, "BIO_get_mem_data has length %d", len);
     return TSI_INTERNAL_ERROR;
   }
   tsi_result result = tsi_construct_string_peer_property(
@@ -1089,8 +1091,7 @@ static tsi_result ssl_handshaker_result_extract_peer(
   if (peer_chain != nullptr) {
     result = tsi_ssl_get_cert_chain_contents(
         peer_chain, &peer->properties[peer->property_count]);
-    if (result != TSI_OK) return result;
-    peer->property_count++;
+    if (result == TSI_OK) peer->property_count++;
   }
   if (alpn_selected != nullptr) {
     result = tsi_construct_string_peer_property(
