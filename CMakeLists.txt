@@ -13571,7 +13571,6 @@ target_link_libraries(grpclb_end2end_test
   grpc++
   grpc
   gpr
-  e_passthrough
   ${_gRPC_GFLAGS_LIBRARIES}
 )
 
@@ -13662,6 +13661,7 @@ target_link_libraries(h2_ssl_cert_test
   grpc++
   grpc
   gpr
+  e_passthrough
   ${_gRPC_GFLAGS_LIBRARIES}
 )
 
