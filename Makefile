@@ -3516,7 +3516,7 @@ $(LIBDIR)/$(CONFIG)/libe_passthrough.a: openssl_dep_error
 else
 
 
-$(LIBDIR)/$(CONFIG)/libe_passthrough.a: $(ZLIB_DEP) $(OPENSSL_DEP) $(CARES_DEP) $(ADDRESS_SORTING_DEP) $(UPB_DEP)  $(LIBE_PASSTHROUGH_OBJS) 
+$(LIBDIR)/$(CONFIG)/libe_passthrough.a: $(ZLIB_DEP) $(OPENSSL_DEP) $(CARES_DEP) $(ADDRESS_SORTING_DEP) $(UPB_DEP) $(GRPC_ABSEIL_DEP)  $(LIBE_PASSTHROUGH_OBJS) 
 	$(E) "[AR]      Creating $@"
 	$(Q) mkdir -p `dirname $@`
 	$(Q) rm -f $(LIBDIR)/$(CONFIG)/libe_passthrough.a
