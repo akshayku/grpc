@@ -140,6 +140,12 @@ static int g_ssl_ctx_ex_factory_index = -1;
 static const unsigned char kSslSessionIdContext[] = {'g', 'r', 'p', 'c'};
 #ifndef OPENSSL_IS_BORINGSSL
 static const char kSslEnginePrefix[] = "engine:";
+static gpr_once g_init_engine_once = GPR_ONCE_INIT;
+static gpr_mu g_engine_mu;
+
+static void init_engine(void) {
+  gpr_mu_init(&g_engine_mu);
+}
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000
@@ -593,6 +599,8 @@ static tsi_result ssl_ctx_use_engine_private_key(SSL_CTX* context,
   EVP_PKEY* private_key = nullptr;
   ENGINE* engine = nullptr;
   char* engine_name = nullptr;
+  int engineInit = 0;
+  gpr_once_init(&g_init_engine_once, init_engine);
   // Parse key which is in following format engine:<engine_id>:<key_id>
   do {
     char* engine_start = (char*)pem_key + strlen(kSslEnginePrefix);
@@ -610,6 +618,7 @@ static tsi_result ssl_ctx_use_engine_private_key(SSL_CTX* context,
     engine_name = static_cast<char*>(gpr_zalloc(engine_name_length + 1));
     memcpy(engine_name, engine_start, engine_name_length);
     gpr_log(GPR_DEBUG, "ENGINE key: %s", engine_name);
+    gpr_mu_lock(&g_engine_mu);
     ENGINE_load_dynamic();
     engine = ENGINE_by_id(engine_name);
     if (engine == nullptr) {
@@ -641,6 +650,8 @@ static tsi_result ssl_ctx_use_engine_private_key(SSL_CTX* context,
       result = TSI_INVALID_ARGUMENT;
       break;
     }
+    engineInit = 1;
+    gpr_mu_unlock(&g_engine_mu);
     private_key = ENGINE_load_private_key(engine, key_id, 0, 0);
     if (private_key == nullptr) {
       gpr_log(GPR_ERROR, "ENGINE_load_private_key failed");
@@ -653,8 +664,15 @@ static tsi_result ssl_ctx_use_engine_private_key(SSL_CTX* context,
       break;
     }
   } while (0);
-  if (engine != nullptr) ENGINE_free(engine);
+  gpr_mu_lock(&g_engine_mu);
   if (private_key != nullptr) EVP_PKEY_free(private_key);
+  if (engine != nullptr) {
+    if (engineInit) {
+      ENGINE_finish(engine);
+    }
+    ENGINE_free(engine);
+  }
+  gpr_mu_unlock(&g_engine_mu);
   if (engine_name != nullptr) gpr_free(engine_name);
   return result;
 }
